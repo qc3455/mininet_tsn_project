@@ -4,7 +4,6 @@ from tsn.topology import create_tsn_topo
 from tsn.gcl_scheduler.heuristic import HeuristicGCLScheduler
 
 
-# 如果后续增加其他算法，也可在此导入对应模块
 
 def parse_args():
     parser = argparse.ArgumentParser(description="TSN GCL Scheduler Selection")
@@ -12,7 +11,7 @@ def parse_args():
         '--gcl',
         type=str,
         default='heuristic',
-        help="选择 GCL 算法，例如 'heuristic'（默认）"
+        help="Select a GCL algorithm, such as 'heuristic' (default)"
     )
     return parser.parse_args()
 
@@ -22,7 +21,7 @@ if __name__ == '__main__':
     if args.gcl == 'heuristic':
         scheduler = HeuristicGCLScheduler(cycle_time=200000)
     else:
-        print(f"未识别的 GCL 算法 '{args.gcl}'，使用默认 'heuristic'")
+        print(f"Unidentified GCL algorithm '{args.gcl}'，Use default 'heuristic'")
         scheduler = HeuristicGCLScheduler(cycle_time=200000)
 
     create_tsn_topo(scheduler)

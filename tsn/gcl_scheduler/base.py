@@ -5,7 +5,7 @@ class GCLScheduler(ABC):
     @abstractmethod
     def generate_gcl(self):
         """
-        生成 GCL 配置。
-        返回：调度表字符串和周期（单位：ns）
+        Generate GCL configuration.
+        Returns: Scheduling table string and period (unit: ns)
         """
         pass
