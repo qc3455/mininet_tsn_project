@@ -11,7 +11,7 @@ from mininet.log import setLogLevel, info
 from tsn.ptp_sync import setup_ptp_sync
 from tsn.taprio_config import config_taprio
 from tsn.gcl_scheduler.heuristic import HeuristicGCLScheduler
-from tsn.experiment_logger import log_experiment_data, measure_network_performance
+from tsn.experiment_logger import log_experiment_data, measure_latency_jitter, measure_schedule_adherence
 
 
 def load_kernel_modules():
@@ -61,26 +61,22 @@ def create_tsn_topo(scheduler):
 
 
 def dynamic_gcl_update(net, scheduler, log_file='experiment_data.csv'):
-    """
-    动态 GCL 更新任务，每隔一段时间更新调度表，并记录相关数据到 CSV 文件中。
-    """
     scheduler_name = type(scheduler).__name__
     while True:
-        time.sleep(30)  # 每隔 30 秒更新一次
+        time.sleep(30)
         info("\n*** 执行 GCL 更新...\n")
         try:
-            # 生成新的 GCL 调度表
             sched_entries, cycle_time = scheduler.generate_gcl()
             base_time = int((time.time() + 5) * 1e9)  # 延迟 5 秒生效
 
-            # 采集额外性能指标数据
-            # extra_metrics = measure_network_performance()
-            extra_metrics = measure_network_performance(net, source_host="h1", target_host="h3")
+            # 测量延迟和抖动
+            latency, jitter = measure_latency_jitter(net, source_host="h1", target_host="h3", count=5)
+            # 测量调度准确性（预期生效时间为 base_time）
+            schedule_adherence = measure_schedule_adherence(base_time)
 
+            # 这里是对每个交换机的配置更新……
             for sw, iface in [(net.get('s1'), 'ens160'), (net.get('s2'), 'ens192')]:
-                # 删除旧配置
                 sw.cmd(f"sudo tc qdisc del dev {iface} root 2>/dev/null; true")
-                # 构造新的 taprio 命令
                 cmd = (
                     f"sudo tc qdisc add dev {iface} root taprio "
                     f"num_tc 2 map 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
@@ -97,8 +93,10 @@ def dynamic_gcl_update(net, scheduler, log_file='experiment_data.csv'):
                     info(f"++ {sw.name} GCL 更新生效于 {time.ctime(base_time / 1e9)}\n"
                          f"   周期: {cycle_time}ns, 调度表: {sched_entries}\n")
 
-            # 将本次更新数据记录到 CSV 文件中
-            log_experiment_data(log_file, time.time(), scheduler_name, cycle_time, sched_entries, extra_metrics)
+            # 记录数据到 CSV 文件中
+            extra_metrics = "其他自定义信息"
+            log_experiment_data(log_file, time.time(), scheduler_name, cycle_time,
+                                sched_entries, latency, jitter, schedule_adherence, extra_metrics)
 
         except Exception as e:
             info(f"!! 动态更新异常: {str(e)}\n")
