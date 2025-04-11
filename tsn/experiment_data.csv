@@ -1,0 +1,2 @@
+timestamp,scheduler_name,cycle_time,sched_entries,latency,jitter,schedule_adherence,extra_metrics
+1743636596.7570047,HeuristicGCLScheduler,200000,sched-entry S 01 60000 sched-entry S 01 70000 sched-entry S 10 60000,0.025ms,0.017ms,4999998208,其他自定义信息
